@@ -1,0 +1,238 @@
+package service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+import java.io.FileWriter;
+import java.io.FileReader;
+import java.io.IOException;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import model.College;
+import model.Student;
+import model.Student.Branch;
+
+public class StudentService {
+    private static final String FILE_NAME = "students.json";
+    private Gson gson = new Gson();
+
+    public void addStudent(College student) {
+        if (student != null) {
+            List<College> students = loadStudents();
+
+            boolean exists = false;
+            for (College s : students) {
+                if (s.getErp() == student.getErp()) {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (exists) {
+                System.out.println("Student with ERP " + student.getErp() + " already exists");
+            } else {
+                students.add(student);
+                saveStudents(students);
+                System.out.println("Student saved successfully");
+            }
+
+        } else {
+            System.out.println("No Data Found");
+        }
+    }
+
+    public void showAllStudents() {
+        List<College> students = loadStudents();
+        if (students.isEmpty()) {
+            System.out.println("No students found");
+            return;
+        }
+        for (College s : students) {
+            if (s != null) {
+                s.show();
+            } else {
+                System.out.println("Found a null student data");
+            }
+        }
+    }
+
+    public void searchStudent(long erpToSearch) {
+        List<College> students = loadStudents();
+        boolean found = false;
+
+        for (College s : students) {
+            if (s.getErp() == erpToSearch) {
+                System.out.println("Student Found:");
+                s.show();
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            System.out.println("Student with ERP " + erpToSearch + " not found");
+        }
+    }
+
+    public void deleteStudent(long erpToDelete) {
+        List<College> students = loadStudents();
+        boolean removed = false;
+
+        for (int i = 0; i < students.size(); i++) {
+            if (students.get(i).getErp() == erpToDelete) {
+                students.remove(i);
+                removed = true;
+                break;
+            }
+        }
+
+        if (removed) {
+            saveStudents(students);
+            System.out.println("Student with ERP " + erpToDelete + " deleted successfully");
+        } else {
+            System.out.println("Student with ERP " + erpToDelete + " not found");
+        }
+    }
+
+    private List<College> loadStudents() {
+        try (FileReader reader = new FileReader(FILE_NAME)) {
+            List<College> students = gson.fromJson(reader, new TypeToken<List<College>>() {}.getType());
+            return (students != null) ? students : new ArrayList<>();
+        } catch (IOException e) {
+            return new ArrayList<>();
+        }
+    }
+
+    public void updateStudent(long erpToUpdate) {
+        List<College> students = loadStudents();
+        boolean found = false;
+        Scanner input = new Scanner(System.in);
+
+        for (College s : students) {
+            if (s.getErp() == erpToUpdate) {
+                found = true;
+                boolean updating = true;
+
+                while (updating) {
+                    System.out.println("Select field to update:");
+                    System.out.println("1. Name");
+                    System.out.println("2. ERP");
+                    System.out.println("3. Branch");
+                    System.out.println("4. Institute");
+                    System.out.println("5. College Name");
+                    System.out.println("6. Exit Update");
+
+                    System.out.print("Enter your choice: ");
+                    int choose = 0;
+
+                    try {
+                        choose = Integer.parseInt(input.nextLine().trim());
+                    } catch (NumberFormatException e) {
+                        System.out.println("Enter a valid choice");
+                        continue;
+                    }
+
+                    switch (choose) {
+                        case 1:
+                        	 String newName;
+                             while(true) {
+                            	 System.out.println("Enter your new name: ");
+                             	 newName = input.nextLine().trim();
+                             	if(newName.isEmpty()) {
+                            		System.out.println("Name cannot be empty");
+                            		continue;
+                            	}
+                            	if(!newName.matches("[a-zA-Z ]+")) {
+                            		System.out.println("Name should contain only alphabets and spaces");
+                            		continue;
+                            	}
+                            	if(newName.length() <2 || newName.length() >30) {
+                            		System.out.println("Name should be between 2 to 30 characters	");
+                            		continue;
+                            	}
+                            	break;
+                            }    
+                             s.setName(newName);
+                             System.out.println("New name updated");
+                            break;
+            
+                        case 2:
+                            System.out.print("Enter new ERP: ");
+                            try {
+                                long newErp = Long.parseLong(input.nextLine().trim());
+                                s.setErp(newErp);
+                                System.out.println("ERP updated");
+                            } catch (NumberFormatException e) {
+                                System.out.println("Enter a valid ERP number");
+                            }
+                            break;
+
+                        case 3:
+                            System.out.print("Enter new Branch: ");
+                            Branch newBranch = null;
+                            while(true) {
+                            	String branchInput = input.nextLine().trim().toUpperCase();
+                            	try {
+                            		newBranch = Branch.valueOf(branchInput);
+                            		break;
+                            	}catch(IllegalArgumentException e) {
+                            		System.out.println("Enter the branch related to courses");
+                            	}
+                            }
+                            s.setBranch(newBranch);
+                            System.out.println("branch updated successfully");
+                            break;
+
+                        case 4:
+                            System.out.print("Enter new Institute: ");
+                            String newInstitute = input.nextLine().trim();
+                            if (!newInstitute.isEmpty()) {
+                                s.setInstitute(newInstitute);
+                                System.out.println("Institute updated");
+                            } else {
+                                System.out.println("Enter something");
+                            }
+                            break;
+
+                        case 5:
+                            System.out.print("Enter new College Name: ");
+                            String newCName = input.nextLine().trim();
+                            if (!newCName.isEmpty()) {
+                                s.setCname(newCName); 
+                                System.out.println("College name updated");
+                            } else {
+                                System.out.println("Enter something");
+                            }
+                            break;
+
+                        case 6:
+                            updating = false;
+                            break;
+
+                        default:
+                            System.out.println("Invalid choice, try again");
+                            break;
+                    }
+                }
+
+                saveStudents(students);
+                System.out.println("Student with ERP " + erpToUpdate + " updated successfully");
+                break; 
+            }
+        }
+
+        if (!found) {
+            System.out.println("Student with ERP " + erpToUpdate + " not found");
+        }
+    }
+
+    private void saveStudents(List<College> students) {
+        try (FileWriter writer = new FileWriter(FILE_NAME)) {
+            gson.toJson(students, writer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
